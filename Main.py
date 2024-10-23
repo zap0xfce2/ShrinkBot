@@ -15,6 +15,7 @@ CONFIG_FILE = "shrinkbot_config.json"
 DEFAULT_MIN_SIZE_BYTES = 8 * 1024 * 1024  # 8 MB
 DEFAULT_TIME_FORMAT = "%d.%m.%Y %H:%M:%S"  # Deutsches Zeitformat
 DEFAULT_LOG_FILE = "shrinkbot.log"  # Name der Logdatei
+Version = "v241023"
 
 # Konfiguriere das Logging (wird später angepasst)
 logging.basicConfig(
@@ -385,7 +386,7 @@ def main():
 
     settings = config.get("settings", {})
     min_size_mb = settings.get("min_size_bytes", DEFAULT_MIN_SIZE_BYTES) / (1024 * 1024)
-    log("ShrinkBot 1.0 gestartet!")
+    log(f"ShrinkBot {Version} gestartet!")
     log(f"Nur MKV-Dateien größer als {min_size_mb:.2f} MB werden verarbeitet.")
     log(f"Durchsuche: {start_path}")
 
