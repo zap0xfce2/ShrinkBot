@@ -126,6 +126,15 @@ def reset_statistics(config):
         log(f"Fehler beim Zurücksetzen der Statistiken: {e}")
 
 
+def reset_blacklist(config):
+    try:
+        config["blacklist"] = []
+        save_config(config)
+        log("Blacklist wurde zurückgesetzt.")
+    except Exception as e:
+        log(f"Fehler beim Zurücksetzen der Blacklist: {e}")
+
+
 def update_logging(settings):
     # Aktualisiere das Logging basierend auf den aktuellen Einstellungen
     global logging
@@ -351,13 +360,23 @@ def main():
         action="store_true",
         help="Setze die Statistiken zurück",
     )
+    parser.add_argument(
+        "--reset-blacklist",
+        action="store_true",
+        help="Setze die Blacklist zurück",
+    )
     args = parser.parse_args()
 
     start_path = args.start_path
     config = load_config()
 
-    if args.reset_stats:
-        reset_statistics(config)
+    # Handhabung der Reset-Parameter
+    if args.reset_stats or args.reset_blacklist:
+        if args.reset_stats:
+            reset_statistics(config)
+        if args.reset_blacklist:
+            reset_blacklist(config)
+        save_config(config)
         sys.exit(0)
 
     if not os.path.exists(start_path):
