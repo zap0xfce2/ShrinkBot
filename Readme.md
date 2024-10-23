@@ -4,7 +4,7 @@ Ein Python-Skript, das durch eine Dateistruktur crawlt und mit ffmpeg MKV-Dateie
 
 ## Benutzung über die Befehlszeile
 
-Entweder mit `screen -S ShrinkBot -m python Main.py <Pfad>` oder direkt mit `python Main.py <Pfad>`
+Entweder mit `screen -S ShrinkBot -dm python Main.py <Pfad>` oder direkt mit `python Main.py <Pfad>`
 
 ## Übergabeparameter
 
