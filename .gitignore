@@ -1,0 +1,4 @@
+PoC
+__pycache__
+*.json
+*.log

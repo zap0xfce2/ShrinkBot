@@ -1,0 +1,50 @@
+---
+# See https://pre-commit.com for more information
+repos:
+  - repo: https://gitlab.com/vojko.pribudic.foss/pre-commit-update
+    rev: v0.5.1post1
+    hooks:
+      - id: pre-commit-update
+        stages:
+          - commit
+        args:
+          - --dry-run
+          - --exclude
+          - gitlint
+
+  # See https://pre-commit.com/hooks.html for more hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args:
+          - --markdown-linebreak-ext=md
+          - --markdown-linebreak-ext=tf
+      - id: end-of-file-fixer
+      - id: check-yaml
+        stages:
+          - commit
+      - id: check-added-large-files
+        stages:
+          - commit
+
+  # See https://jorisroovers.com/gitlint for more information
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.19.1
+    hooks:
+      - id: gitlint
+
+  # https://github.com/adrienverge/yamllint
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        stages:
+          - commit
+        args: [--format, parsable, --strict]
+
+  # https://black.readthedocs.io/en/stable/integrations/source_version_control.html
+  - repo: https://github.com/psf/black-pre-commit-mirror
+    rev: 24.10.0
+    hooks:
+      - id: black
