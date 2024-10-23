@@ -10,8 +10,8 @@ from datetime import datetime
 # screen -S ShrinkBot -m python Main.py <Pfad>
 
 # Konfigurationsvariablen
-CRAWL_FILE = "shrinkbot_crawl.json"
-MIN_SIZE_BYTES = 8 * 1024 * 1024  # 500 MB
+CONFIG_FILE = "shrinkbot_config.json"
+MIN_SIZE_BYTES = 8 * 1024 * 1024  # 8 MB
 TIME_FORMAT = "%d.%m.%Y %H:%M:%S"  # Deutsches Zeitformat
 LOG_FILE = "shrinkbot.log"  # Name der Logdatei
 
@@ -31,32 +31,37 @@ def log(message):
     logging.info(message)
 
 
-def load_crawl_file():
-    if os.path.exists(CRAWL_FILE):
+def load_config():
+    if os.path.exists(CONFIG_FILE):
         try:
-            with open(CRAWL_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                # Stelle sicher, dass die Blacklist existiert
+                if "blacklist" not in config:
+                    config["blacklist"] = []
+                return config
         except json.JSONDecodeError:
-            log("Crawlfile ist beschädigt. Starte von vorne.")
-            return {"last_path": None}
-    return {"last_path": None}
+            log("Konfigurationsdatei ist beschädigt. Starte von vorne.")
+            return {"last_path": None, "blacklist": []}
+    return {"last_path": None, "blacklist": []}
 
 
-def save_crawl_file(config):
+def save_config(config):
     try:
-        with open(CRAWL_FILE, "w", encoding="utf-8") as f:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
     except Exception as e:
         log(f"Fehler beim Speichern der Konfiguration: {e}")
 
 
-def reset_crawl_file():
+def reset_config(config):
     try:
-        with open(CRAWL_FILE, "w", encoding="utf-8") as f:
-            json.dump({"last_path": None}, f, ensure_ascii=False, indent=4)
-        log("Crawlfile wurde zurückgesetzt.")
+        config["last_path"] = None
+        # Behalte die Blacklist bei
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
     except Exception as e:
-        log(f"Fehler beim Zurücksetzen der Konfiguration: {e}")
+        log(f"Fehler beim Zurücksetzen des last_path in der Konfiguration: {e}")
 
 
 def find_mkv_files(start_path, config):
@@ -74,7 +79,10 @@ def find_mkv_files(start_path, config):
 
         for file in files:
             if file.lower().endswith(".mkv"):
-                file_path = os.path.join(root, file)
+                file_path = os.path.abspath(os.path.join(root, file))
+                if file_path in config["blacklist"]:
+                    log(f"Überspringen da auf Blacklist: {file_path}")
+                    continue
                 try:
                     size = os.path.getsize(file_path)
                     if size > MIN_SIZE_BYTES:
@@ -85,10 +93,10 @@ def find_mkv_files(start_path, config):
                     log(f"Fehler beim Zugriff auf {file_path}: {e}")
 
         config["last_path"] = root
-        save_crawl_file(config)
+        save_config(config)
 
 
-def process_mkv(file_path):
+def process_mkv(file_path, config):
     directory, filename = os.path.split(file_path)
     name, _ = os.path.splitext(filename)
     output_filename = f"{name}.mp4"
@@ -98,8 +106,8 @@ def process_mkv(file_path):
         "docker",
         "run",
         "--rm",
-        "--cpuset-cpus",
-        "0,1",  # Nur einen CPU Core verwenden
+        # "--cpuset-cpus",
+        # "0,1",  # Nur einen CPU Core verwenden
         "-v",
         f"{directory}:/config",
         "linuxserver/ffmpeg",
@@ -155,6 +163,12 @@ def process_mkv(file_path):
             else:
                 os.remove(output_path)
                 log(f"MP4-Datei Gelöscht: {output_path}")
+
+                # Füge die Datei zur Blacklist hinzu
+                if file_path not in config["blacklist"]:
+                    config["blacklist"].append(file_path)
+                    save_config(config)
+                    log(f"Datei zur Blacklist hinzugefügt: {file_path}")
         except OSError as e:
             log(f"Fehler beim Vergleichen oder Löschen der Dateien: {e}")
 
@@ -173,7 +187,7 @@ def main():
     args = parser.parse_args()
 
     start_path = args.start_path
-    config = load_crawl_file()
+    config = load_config()
 
     if not os.path.exists(start_path):
         log(f"Startpfad existiert nicht: {start_path}")
@@ -186,14 +200,14 @@ def main():
 
     try:
         for mkv_file in find_mkv_files(start_path, config):
-            process_mkv(mkv_file)
+            process_mkv(mkv_file, config)
     except KeyboardInterrupt:
         log("Vorgang unterbrochen. Fortschritt gespeichert.")
     except Exception as e:
         log(f"Ein Fehler ist aufgetreten: {e}")
     else:
         log("Durchsuchen abgeschlossen.")
-        reset_crawl_file()
+        reset_config(config)
 
 
 if __name__ == "__main__":
