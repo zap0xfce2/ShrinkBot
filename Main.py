@@ -12,17 +12,17 @@ import time  # Importiert für die Zeitmessung
 
 # Konfigurationsvariablen
 CONFIG_FILE = "shrinkbot_config.json"
-MIN_SIZE_BYTES = 8 * 1024 * 1024  # 8 MB
-TIME_FORMAT = "%d.%m.%Y %H:%M:%S"  # Deutsches Zeitformat
-LOG_FILE = "shrinkbot.log"  # Name der Logdatei
+DEFAULT_MIN_SIZE_BYTES = 8 * 1024 * 1024  # 8 MB
+DEFAULT_TIME_FORMAT = "%d.%m.%Y %H:%M:%S"  # Deutsches Zeitformat
+DEFAULT_LOG_FILE = "shrinkbot.log"  # Name der Logdatei
 
-# Konfiguriere das Logging
+# Konfiguriere das Logging (wird später angepasst)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(message)s",
-    datefmt=TIME_FORMAT,
+    datefmt=DEFAULT_TIME_FORMAT,
     handlers=[
-        logging.FileHandler(LOG_FILE, encoding="utf-8"),
+        logging.FileHandler(DEFAULT_LOG_FILE, encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -37,7 +37,7 @@ def load_config():
         try:
             with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 config = json.load(f)
-                # Stelle sicher, dass die Blacklist und Statistics existieren
+                # Stelle sicher, dass die erforderlichen Felder existieren
                 if "blacklist" not in config:
                     config["blacklist"] = []
                 if "statistics" not in config:
@@ -48,6 +48,14 @@ def load_config():
                         "total_conversion_time_seconds": 0.0,
                         "per_directory_savings_mb": {},
                     }
+                if "settings" not in config:
+                    config["settings"] = {
+                        "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
+                        "time_format": DEFAULT_TIME_FORMAT,
+                        "log_file": DEFAULT_LOG_FILE,
+                    }
+                # Aktualisiere das Logging, falls sich die Einstellungen geändert haben
+                update_logging(config["settings"])
                 return config
         except json.JSONDecodeError:
             log("Konfigurationsdatei ist beschädigt. Starte von vorne.")
@@ -61,6 +69,11 @@ def load_config():
                     "total_conversion_time_seconds": 0.0,
                     "per_directory_savings_mb": {},
                 },
+                "settings": {
+                    "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
+                    "time_format": DEFAULT_TIME_FORMAT,
+                    "log_file": DEFAULT_LOG_FILE,
+                },
             }
     return {
         "last_path": None,
@@ -71,6 +84,11 @@ def load_config():
             "total_files_converted": 0,
             "total_conversion_time_seconds": 0.0,
             "per_directory_savings_mb": {},
+        },
+        "settings": {
+            "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
+            "time_format": DEFAULT_TIME_FORMAT,
+            "log_file": DEFAULT_LOG_FILE,
         },
     }
 
@@ -93,7 +111,41 @@ def reset_config(config):
         log(f"Fehler beim Zurücksetzen des last_path in der Konfiguration: {e}")
 
 
+def reset_statistics(config):
+    try:
+        config["statistics"] = {
+            "total_input_mb": 0.0,
+            "total_savings_mb": 0.0,
+            "total_files_converted": 0,
+            "total_conversion_time_seconds": 0.0,
+            "per_directory_savings_mb": {},
+        }
+        save_config(config)
+        log("Statistiken wurden zurückgesetzt.")
+    except Exception as e:
+        log(f"Fehler beim Zurücksetzen der Statistiken: {e}")
+
+
+def update_logging(settings):
+    # Aktualisiere das Logging basierend auf den aktuellen Einstellungen
+    global logging
+    logging.getLogger().handlers = []  # Entferne bestehende Handler
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(message)s",
+        datefmt=settings.get("time_format", DEFAULT_TIME_FORMAT),
+        handlers=[
+            logging.FileHandler(
+                settings.get("log_file", DEFAULT_LOG_FILE), encoding="utf-8"
+            ),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+
+
 def find_mkv_files(start_path, config):
+    settings = config.get("settings", {})
+    min_size_bytes = settings.get("min_size_bytes", DEFAULT_MIN_SIZE_BYTES)
     started = False
     for root, dirs, files in os.walk(start_path):
         if config["last_path"]:
@@ -110,11 +162,13 @@ def find_mkv_files(start_path, config):
             if file.lower().endswith(".mkv"):
                 file_path = os.path.abspath(os.path.join(root, file))
                 if file_path in config["blacklist"]:
-                    log(f"Überspringen da auf Blacklist: {file_path}")
+                    log(
+                        f"Überspringe {file_path} da die Datei auf der Blacklist steht."
+                    )
                     continue
                 try:
                     size = os.path.getsize(file_path)
-                    if size > MIN_SIZE_BYTES:
+                    if size > min_size_bytes:
                         size_mb = size / (1024 * 1024)
                         log(f"Gefunden: {file} ({size_mb:.2f} MB)")
                         yield file_path
@@ -197,16 +251,18 @@ def process_mkv(file_path, config):
 
             if output_size < input_size:
                 os.remove(file_path)
-                log(f"MKV-Datei Gelöscht: {file_path}")
+                # log(f"MKV-Datei Gelöscht: {file_path}")
             else:
                 os.remove(output_path)
-                log(f"MP4-Datei Gelöscht: {output_path}")
+                # log(f"MP4-Datei Gelöscht: {output_path}")
 
                 # Füge die Datei zur Blacklist hinzu
                 if file_path not in config["blacklist"]:
                     config["blacklist"].append(file_path)
                     save_config(config)
-                    log(f"Datei zur Blacklist hinzugefügt: {file_path}")
+                    log(
+                        f"Die Konvertierung bringt keine Ersparnis. Blacklisteintrag erstellt."
+                    )
 
             # Nur positive Ersparnisse loggen und in die Statistik aufnehmen
             if savings_mb > 0 and savings_percent > 0:
@@ -221,9 +277,9 @@ def process_mkv(file_path, config):
                 )
 
             return (
-                savings_mb,
-                savings_percent,
-                conversion_time if savings_mb > 0 else None,
+                (savings_mb, savings_percent, conversion_time)
+                if savings_mb > 0
+                else None
             )
 
         except OSError as e:
@@ -261,6 +317,27 @@ def display_directory_savings(config, directory):
         log(f"Ersparnis für Verzeichnis '{directory}': {savings_mb:.2f} MB")
 
 
+def display_total_statistics(config):
+    stats = config["statistics"]
+    total_input_mb = stats["total_input_mb"]
+    total_savings_mb = stats["total_savings_mb"]
+    total_files = stats["total_files_converted"]
+    total_time = stats["total_conversion_time_seconds"]
+
+    if total_input_mb > 0:
+        total_savings_percent = (total_savings_mb / total_input_mb) * 100
+    else:
+        total_savings_percent = 0.0
+
+    if total_files > 0:
+        average_time = total_time / total_files
+    else:
+        average_time = 0.0
+
+    log(f"Gesamtersparnis: {total_savings_mb:.2f} MB ({total_savings_percent:.2f}%)")
+    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time:.2f} Sekunden")
+
+
 def main():
     parser = argparse.ArgumentParser(description="ShrinkBot")
     parser.add_argument(
@@ -269,16 +346,26 @@ def main():
         default=os.getcwd(),
         help="Startverzeichnis für den ShrinkBot (standardmäßig aktuelles Verzeichnis)",
     )
+    parser.add_argument(
+        "--reset-stats",
+        action="store_true",
+        help="Setze die Statistiken zurück",
+    )
     args = parser.parse_args()
 
     start_path = args.start_path
     config = load_config()
 
+    if args.reset_stats:
+        reset_statistics(config)
+        sys.exit(0)
+
     if not os.path.exists(start_path):
         log(f"Startpfad existiert nicht: {start_path}")
         sys.exit(1)
 
-    min_size_mb = MIN_SIZE_BYTES / (1024 * 1024)
+    settings = config.get("settings", {})
+    min_size_mb = settings.get("min_size_bytes", DEFAULT_MIN_SIZE_BYTES) / (1024 * 1024)
     log("ShrinkBot 1.0 gestartet!")
     log(f"Nur MKV-Dateien größer als {min_size_mb:.2f} MB werden verarbeitet.")
     log(f"Durchsuche: {start_path}")
@@ -311,27 +398,6 @@ def main():
 
     # Zeige die Gesamtstatistiken an
     display_total_statistics(config)
-
-
-def display_total_statistics(config):
-    stats = config["statistics"]
-    total_input_mb = stats["total_input_mb"]
-    total_savings_mb = stats["total_savings_mb"]
-    total_files = stats["total_files_converted"]
-    total_time = stats["total_conversion_time_seconds"]
-
-    if total_input_mb > 0:
-        total_savings_percent = (total_savings_mb / total_input_mb) * 100
-    else:
-        total_savings_percent = 0.0
-
-    if total_files > 0:
-        average_time = total_time / total_files
-    else:
-        average_time = 0.0
-
-    log(f"Gesamtersparnis: {total_savings_mb:.2f} MB ({total_savings_percent:.2f}%)")
-    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time:.2f} Sekunden")
 
 
 if __name__ == "__main__":
