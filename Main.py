@@ -4,18 +4,18 @@ import sys
 import argparse
 import subprocess
 import logging
-from datetime import datetime
-import time  # Importiert für die Zeitmessung
+from datetime import datetime, time, timedelta
+import time as time_module  # Importiert für die Zeitmessung und Sleep
 
 # Aufruf
 # screen -S ShrinkBot -m python Main.py <Pfad>
 
 # Konfigurationsvariablen
 CONFIG_FILE = "shrinkbot_config.json"
-DEFAULT_MIN_SIZE_BYTES = 8 * 1024 * 1024  # 8 MB
+DEFAULT_MIN_SIZE_BYTES = 500 * 1024 * 1024  # 500 MB
 DEFAULT_TIME_FORMAT = "%d.%m.%Y %H:%M:%S"  # Deutsches Zeitformat
 DEFAULT_LOG_FILE = "shrinkbot.log"  # Name der Logdatei
-Version = "v241023"
+VERSION = "v241023"
 
 # Konfiguriere das Logging (wird später angepasst)
 logging.basicConfig(
@@ -54,7 +54,11 @@ def load_config():
                         "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
                         "time_format": DEFAULT_TIME_FORMAT,
                         "log_file": DEFAULT_LOG_FILE,
+                        "pause_times": [],
                     }
+                else:
+                    if "pause_times" not in config["settings"]:
+                        config["settings"]["pause_times"] = []
                 # Aktualisiere das Logging, falls sich die Einstellungen geändert haben
                 update_logging(config["settings"])
                 return config
@@ -74,6 +78,7 @@ def load_config():
                     "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
                     "time_format": DEFAULT_TIME_FORMAT,
                     "log_file": DEFAULT_LOG_FILE,
+                    "pause_times": [],
                 },
             }
     return {
@@ -90,6 +95,7 @@ def load_config():
             "min_size_bytes": DEFAULT_MIN_SIZE_BYTES,
             "time_format": DEFAULT_TIME_FORMAT,
             "log_file": DEFAULT_LOG_FILE,
+            "pause_times": [],
         },
     }
 
@@ -153,6 +159,58 @@ def update_logging(settings):
     )
 
 
+def check_pause_time(settings):
+
+    # Überprüft, ob die aktuelle Zeit innerhalb eines Pausenzeitraums liegt.
+    # Wenn ja, wartet bis der Pausenzeitraum vorbei ist.
+
+    pause_times = settings.get("pause_times", [])
+    if not pause_times:
+        return  # Keine Pausen definiert
+
+    now = datetime.now().time()
+
+    for pause in pause_times:
+        start_str = pause.get("start")
+        end_str = pause.get("end")
+        try:
+            start_time = datetime.strptime(start_str, "%H:%M").time()
+            end_time = datetime.strptime(end_str, "%H:%M").time()
+        except ValueError:
+            log(f"Ungültiges Zeitformat in Pausenzeit: {pause}")
+            continue  # Überspringe ungültige Pausenzeiten
+
+        if start_time < end_time:
+            # Pausenzeit innerhalb eines Tages
+            if start_time <= now < end_time:
+                wait_until = datetime.combine(datetime.today(), end_time)
+                wait_seconds = (wait_until - datetime.now()).total_seconds()
+                log(
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_seconds / 60:.0f} Minuten."
+                )
+                time_module.sleep(wait_seconds)
+                log("Pausenzeit beendet. Fortsetzung der Verarbeitung.")
+                return  # Nach der Pause weiterarbeiten
+        else:
+            # Pausenzeit über Mitternacht hinweg
+            if now >= start_time or now < end_time:
+                if now >= start_time:
+                    # Pause bis zum Ende der heutigen Pausezeit
+                    wait_until = datetime.combine(
+                        datetime.today() + timedelta(days=1), end_time
+                    )
+                else:
+                    # Pause bis zum Ende der morgigen Pausezeit
+                    wait_until = datetime.combine(datetime.today(), end_time)
+                wait_seconds = (wait_until - datetime.now()).total_seconds()
+                log(
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_seconds / 60:.0f} Minuten."
+                )
+                time_module.sleep(wait_seconds)
+                log("Pausenzeit beendet. Fortsetzung der Verarbeitung.")
+                return  # Nach der Pause weiterarbeiten
+
+
 def find_mkv_files(start_path, config):
     settings = config.get("settings", {})
     min_size_bytes = settings.get("min_size_bytes", DEFAULT_MIN_SIZE_BYTES)
@@ -199,8 +257,8 @@ def process_mkv(file_path, config):
         "docker",
         "run",
         "--rm",
-        # "--cpuset-cpus",
-        # "0,1",  # Nur einen CPU Core verwenden
+        "--cpuset-cpus",
+        "0,1",  # Nur einen CPU Core verwenden
         "-v",
         f"{directory}:/config",
         "linuxserver/ffmpeg",
@@ -229,12 +287,12 @@ def process_mkv(file_path, config):
     ]
 
     log(f"Konvertierung von {filename} läuft...")
-    start_time = time.time()  # Startzeit für die Konvertierung
+    start_time = time_module.time()  # Startzeit für die Konvertierung
     try:
         result = subprocess.run(
             command, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        end_time = time.time()  # Endzeit nach der Konvertierung
+        end_time = time_module.time()  # Endzeit nach der Konvertierung
         conversion_time = end_time - start_time
         log(f"Konvertierung abgeschlossen: {output_path}")
 
@@ -386,13 +444,16 @@ def main():
 
     settings = config.get("settings", {})
     min_size_mb = settings.get("min_size_bytes", DEFAULT_MIN_SIZE_BYTES) / (1024 * 1024)
-    log(f"ShrinkBot {Version} gestartet!")
+    log(f"ShrinkBot {VERSION} gestartet!")
     log(f"Nur MKV-Dateien größer als {min_size_mb:.2f} MB werden verarbeitet.")
     log(f"Durchsuche: {start_path}")
 
     current_directory = None
     try:
         for mkv_file in find_mkv_files(start_path, config):
+            # Überprüfe vor der Verarbeitung auf Pausenzeiten
+            check_pause_time(settings)
+
             directory = os.path.dirname(mkv_file)
             # Überprüfe, ob wir in ein neues Verzeichnis wechseln
             if current_directory and directory != current_directory:
