@@ -1,7 +1,6 @@
-# Pause.py
-
 from datetime import datetime, timedelta
 from Logger import log
+from Utils import format_number, format_time
 import time as time_module
 
 
@@ -37,7 +36,7 @@ def check_pause_time(settings, statistics):
                 wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 log(
-                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_seconds / 60:.0f} Minuten."
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {format_number(wait_seconds / 60)} Minuten."
                 )
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
@@ -57,7 +56,7 @@ def check_pause_time(settings, statistics):
                     wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 log(
-                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_seconds / 60:.0f} Minuten."
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {format_number(wait_seconds / 60)} Minuten."
                 )
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
@@ -78,9 +77,10 @@ def log_current_statistics(statistics):
     total_time = statistics.get("total_conversion_time_seconds", 0.0)
 
     if total_files > 0:
-        average_time = total_time / total_files
+        average_time_seconds = total_time / total_files
+        average_time_str = format_time(average_time_seconds)
     else:
-        average_time = 0.0
+        average_time_str = "0,00 Sekunden"
 
-    log(f"Gesamtersparnis: {total_savings_mb:.2f} MB")
-    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time:.2f} Sekunden")
+    log(f"Gesamtersparnis: {format_number(total_savings_mb)} MB")
+    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time_str}")

@@ -3,6 +3,7 @@ import subprocess
 from Logger import log
 from Config import save_config
 from Statistics import update_statistics
+from Utils import format_number
 import time as time_module  # Importiert für die Zeitmessung und Sleep
 
 
@@ -37,7 +38,7 @@ def find_mkv_files(start_path, config):
                     size = os.path.getsize(file_path)
                     if size > min_size_bytes:
                         size_mb = size / (1024 * 1024)
-                        log(f"Gefunden: {file} ({size_mb:.2f} MB)")
+                        log(f"Gefunden: {file} ({format_number(size_mb)} MB)")
                         yield file_path
                 except OSError as e:
                     log(f"Fehler beim Zugriff auf {file_path}: {e}")
@@ -140,7 +141,7 @@ def process_mkv(file_path, config):
             if savings_mb > 0 and savings_percent > 0:
                 # Logge die Ersparnis pro Datei
                 log(
-                    f"Ersparnis für {filename}: {savings_mb:.2f} MB ({savings_percent:.2f}%)"
+                    f"Ersparnis für {filename}: {format_number(savings_mb)} MB ({format_number(savings_percent)}%)"
                 )
 
                 # Aktualisiere die Statistik
@@ -159,5 +160,5 @@ def process_mkv(file_path, config):
             return None
 
     except subprocess.CalledProcessError as e:
-        log(f"Fehler bei der Verarbeitung von {file_path}: {e}")
+        log(f"Fehler bei der Verarbeitung von {file_path}: {e.stderr.decode('utf-8')}")
         return None

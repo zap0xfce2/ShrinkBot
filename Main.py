@@ -1,5 +1,6 @@
-# Main.py
-
+#
+# Erstellt von Zap0xfce2 im Oktober 2024
+#
 import os
 import sys
 import argparse
@@ -8,8 +9,9 @@ from Logger import log
 from Processor import find_mkv_files, process_mkv
 from Pause import check_pause_time
 from Statistics import display_directory_savings, display_total_statistics
+from Utils import format_number
 
-VERSION = "v241023"
+VERSION = "v241024"
 
 
 def main():
@@ -50,7 +52,9 @@ def main():
     settings = config.get("settings", {})
     min_size_mb = settings.get("min_size_bytes", 500 * 1024 * 1024) / (1024 * 1024)
     log(f"ShrinkBot {VERSION} gestartet!")
-    log(f"Nur MKV-Dateien größer als {min_size_mb:.2f} MB werden verarbeitet.")
+    log(
+        f"Nur MKV-Dateien größer als {format_number(min_size_mb)} MB werden verarbeitet."
+    )
     log(f"Durchsuche: {start_path}")
 
     current_directory = None

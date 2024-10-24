@@ -1,5 +1,6 @@
 from Logger import log
 from Config import save_config
+from Utils import format_number, format_time
 
 
 def update_statistics(config, directory, input_mb, savings_mb, conversion_time):
@@ -31,7 +32,7 @@ def display_directory_savings(config, directory):
     stats = config["statistics"]
     savings_mb = stats["per_directory_savings_mb"].get(directory, 0.0)
     if savings_mb > 0:
-        log(f"Ersparnis für Verzeichnis '{directory}': {savings_mb:.2f} MB")
+        log(f"Ersparnis für Verzeichnis '{directory}': {format_number(savings_mb)} MB")
 
 
 def display_total_statistics(config):
@@ -51,8 +52,11 @@ def display_total_statistics(config):
 
     if total_files > 0:
         average_time = total_time / total_files
+        average_time_str = format_time(average_time)
     else:
-        average_time = 0.0
+        average_time_str = "0,00 Sekunden"
 
-    log(f"Gesamtersparnis: {total_savings_mb:.2f} MB ({total_savings_percent:.2f}%)")
-    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time:.2f} Sekunden")
+    log(
+        f"Gesamtersparnis: {format_number(total_savings_mb)} MB ({format_number(total_savings_percent)}%)"
+    )
+    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time_str}")
