@@ -1,6 +1,5 @@
-#
-# Erstellt von Zap0xfce2 im Oktober 2024
-#
+# Main.py
+
 import os
 import sys
 import argparse
@@ -58,7 +57,7 @@ def main():
     try:
         for mkv_file in find_mkv_files(start_path, config):
             # Überprüfe vor der Verarbeitung auf Pausenzeiten
-            check_pause_time(settings)
+            check_pause_time(settings, config.get("statistics", {}))
 
             directory = os.path.dirname(mkv_file)
             # Überprüfe, ob wir in ein neues Verzeichnis wechseln
