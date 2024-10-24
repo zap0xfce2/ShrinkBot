@@ -54,7 +54,7 @@ def display_total_statistics(config):
         average_time = total_time / total_files
         average_time_str = format_time(average_time)
     else:
-        average_time_str = "0,00 Sekunden"
+        average_time_str = "0 Sekunden"
 
     log(
         f"Gesamtersparnis: {format_number(total_savings_mb)} MB ({format_number(total_savings_percent)}%)"

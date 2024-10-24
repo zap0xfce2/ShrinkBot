@@ -13,7 +13,8 @@ def format_number(value):
 
 def format_time(seconds):
     """
-    Formatiert eine Zeitdauer in Sekunden in eine lesbare Form (Sekunden, Minuten, Stunden).
+    Formatiert eine Zeitdauer in Sekunden in eine lesbare Form (Sekunden, Minuten, Stunden)
+    ohne Dezimalstellen.
 
     Args:
         seconds (float): Die Zeitdauer in Sekunden.
@@ -22,10 +23,10 @@ def format_time(seconds):
         str: Die formatierte Zeitdauer.
     """
     if seconds < 60:
-        return f"{format_number(seconds)} Sekunden"
+        return f"{int(seconds)} Sekunden"
     elif seconds < 3600:
-        minutes = seconds / 60
-        return f"{format_number(minutes)} Minuten"
+        minutes = round(seconds / 60)
+        return f"{minutes} Minuten"
     else:
-        hours = seconds / 3600
-        return f"{format_number(hours)} Stunden"
+        hours = round(seconds / 3600)
+        return f"{hours} Stunden"

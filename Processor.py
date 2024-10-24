@@ -104,13 +104,14 @@ def process_mkv(file_path, config):
         # Überprüfen, ob das Ausgabefile existiert und größer als 0 Bytes ist
         if not os.path.exists(output_path):
             log(f"Ausgabedatei wurde nicht erstellt: {output_path}")
-            return None
+            return
+
         output_size = os.path.getsize(output_path)
         if output_size == 0:
             log(f"Ausgabedatei ist leer: {output_path}")
             os.remove(output_path)
             log(f"Leere Ausgabedatei gelöscht: {output_path}")
-            return None
+            return
 
         # Vergleiche Dateigrößen
         try:
@@ -149,16 +150,8 @@ def process_mkv(file_path, config):
                     config, directory, input_size_mb, savings_mb, conversion_time
                 )
 
-            return (
-                (savings_mb, savings_percent, conversion_time)
-                if savings_mb > 0
-                else None
-            )
-
         except OSError as e:
             log(f"Fehler beim Vergleichen oder Löschen der Dateien: {e}")
-            return None
 
     except subprocess.CalledProcessError as e:
         log(f"Fehler bei der Verarbeitung von {file_path}: {e.stderr.decode('utf-8')}")
-        return None

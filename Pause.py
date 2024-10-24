@@ -35,8 +35,9 @@ def check_pause_time(settings, statistics):
             if start_time <= now < end_time:
                 wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
+                wait_minutes = int(round(wait_seconds / 60))
                 log(
-                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {format_number(wait_seconds / 60)} Minuten."
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_minutes} Minuten."
                 )
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
@@ -55,8 +56,9 @@ def check_pause_time(settings, statistics):
                     # Pause bis zum Ende der morgigen Pausezeit
                     wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
+                wait_minutes = int(round(wait_seconds / 60))
                 log(
-                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {format_number(wait_seconds / 60)} Minuten."
+                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_minutes} Minuten."
                 )
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
@@ -80,7 +82,7 @@ def log_current_statistics(statistics):
         average_time_seconds = total_time / total_files
         average_time_str = format_time(average_time_seconds)
     else:
-        average_time_str = "0,00 Sekunden"
+        average_time_str = "0 Sekunden"
 
     log(f"Gesamtersparnis: {format_number(total_savings_mb)} MB")
     log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time_str}")
