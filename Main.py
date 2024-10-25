@@ -11,7 +11,7 @@ from Pause import check_pause_time
 from Statistics import display_directory_savings, display_total_statistics
 from Utils import format_number
 
-VERSION = "v241024"
+VERSION = "v241025"
 
 
 def main():
