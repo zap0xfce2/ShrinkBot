@@ -27,7 +27,7 @@ def check_pause_time(settings, statistics):
             start_time = datetime.strptime(start_str, "%H:%M").time()
             end_time = datetime.strptime(end_str, "%H:%M").time()
         except ValueError:
-            log(f"Ungültiges Zeitformat in Pausenzeit: {pause}")
+            log(f"❌ Ungültiges Zeitformat in Pausenzeit: {pause}")
             continue  # Überspringe ungültige Pausenzeiten
 
         if start_time < end_time:
@@ -36,13 +36,12 @@ def check_pause_time(settings, statistics):
                 wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 wait_minutes = int(round(wait_seconds / 60))
-                log(
-                    f"Pausenzeit aktiv: {start_str} - {end_str}. Warte {wait_minutes} Minuten."
-                )
+                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}.")
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
+                log(f"🕰️ Warte {wait_minutes} Minuten bis zum Ende der Pause.")
                 time_module.sleep(wait_seconds)
-                log("Pausenzeit beendet. Fortsetzung der Verarbeitung.")
+                log("🐿️ Pausenzeit beendet. Weiter geht's...")
                 return  # Nach der Pause weiterarbeiten
         else:
             # Pausenzeit über Mitternacht hinweg
@@ -57,12 +56,12 @@ def check_pause_time(settings, statistics):
                     wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 wait_minutes = int(round(wait_seconds / 60))
-                log(f"Pausenzeit aktiv: {start_str} - {end_str}.")
+                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}.")
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
-                log(f"Warte {wait_minutes} Minuten bis zum Ende der Pause.")
+                log(f"🕰️ Warte {wait_minutes} Minuten bis zum Ende der Pause.")
                 time_module.sleep(wait_seconds)
-                log("Pausenzeit beendet. Fortsetzung der Verarbeitung.")
+                log("🐿️ Pausenzeit beendet. Weiter geht's...")
                 return  # Nach der Pause weiterarbeiten
 
 
@@ -83,5 +82,5 @@ def log_current_statistics(statistics):
     else:
         average_time_str = "0 Sekunden"
 
-    log(f"Gesamtersparnis: {format_number(total_savings_mb)} MB")
-    log(f"Durchschnittliche Konvertierungszeit pro Datei: {average_time_str}")
+    log(f"💾 Gesamtersparnis: {format_number(total_savings_mb)} MB")
+    log(f"⏱️ Durchschnittliche Konvertierungszeit pro Datei: {average_time_str}")

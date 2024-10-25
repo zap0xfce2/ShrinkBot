@@ -46,16 +46,16 @@ def main():
         sys.exit(0)
 
     if not os.path.exists(start_path):
-        log(f"Startpfad existiert nicht: {start_path}")
+        log(f"❌ Startpfad existiert nicht: {start_path}")
         sys.exit(1)
 
     settings = config.get("settings", {})
     min_size_mb = settings.get("min_size_bytes", 500 * 1024 * 1024) / (1024 * 1024)
-    log(f"ShrinkBot {VERSION} gestartet!")
+    log(f"🤖 ShrinkBot {VERSION} gestartet!")
     log(
-        f"Nur MKV-Dateien größer als {format_number(min_size_mb)} MB werden verarbeitet."
+        f"🐘 Nur MKV-Dateien größer als {format_number(min_size_mb)} MB werden verarbeitet."
     )
-    log(f"Durchsuche: {start_path}")
+    log(f"🔎 Durchsuche: {start_path}")
 
     current_directory = None
     try:
@@ -77,11 +77,11 @@ def main():
             display_directory_savings(config, current_directory)
 
     except KeyboardInterrupt:
-        log("Vorgang unterbrochen. Fortschritt gespeichert.")
+        log("⏸️ Vorgang unterbrochen. Fortschritt gespeichert.")
     except Exception as e:
-        log(f"Ein Fehler ist aufgetreten: {e}")
+        log(f"❌ Ein Fehler ist aufgetreten: {e}")
     else:
-        log("Durchsuchen abgeschlossen.")
+        log("✅ Durchsuchen abgeschlossen.")
         # Setze last_path zurück nach erfolgreichem Durchlauf
         reset_config(config)
 

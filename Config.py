@@ -45,7 +45,7 @@ def load_config():
                 )
                 return config
         except json.JSONDecodeError:
-            log("Konfigurationsdatei ist beschädigt. Starte von vorne.")
+            log("😵‍💫 Konfigurationsdatei ist beschädigt. Starte von vorne.")
             return {
                 "last_path": None,
                 "blacklist": [],
@@ -91,7 +91,7 @@ def save_config(config):
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
     except Exception as e:
-        log(f"Fehler beim Speichern der Konfiguration: {e}")
+        log(f"❌ Fehler beim Speichern der Konfiguration: {e}")
 
 
 def reset_config(config):
@@ -102,7 +102,7 @@ def reset_config(config):
         config["last_path"] = None
         save_config(config)
     except Exception as e:
-        log(f"Fehler beim Zurücksetzen des last_path in der Konfiguration: {e}")
+        log(f"❌ Fehler beim Zurücksetzen des last_path in der Konfiguration: {e}")
 
 
 def reset_statistics(config):
@@ -118,9 +118,9 @@ def reset_statistics(config):
             "per_directory_savings_mb": {},
         }
         save_config(config)
-        log("Statistiken wurden zurückgesetzt.")
+        log("📊 Statistiken wurden zurückgesetzt.")
     except Exception as e:
-        log(f"Fehler beim Zurücksetzen der Statistiken: {e}")
+        log(f"❌ Fehler beim Zurücksetzen der Statistiken: {e}")
 
 
 def reset_blacklist(config):
@@ -130,6 +130,6 @@ def reset_blacklist(config):
     try:
         config["blacklist"] = []
         save_config(config)
-        log("Blacklist wurde zurückgesetzt.")
+        log("🚫 Blacklist wurde zurückgesetzt.")
     except Exception as e:
-        log(f"Fehler beim Zurücksetzen der Blacklist: {e}")
+        log(f"❌ Fehler beim Zurücksetzen der Blacklist: {e}")

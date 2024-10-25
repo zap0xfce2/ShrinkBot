@@ -20,7 +20,7 @@ def find_mkv_files(start_path, config):
             if not started:
                 if os.path.abspath(root) == os.path.abspath(config["last_path"]):
                     started = True
-                    log(f"Fortsetzen ab: {root}")
+                    log(f"⏯️  Fortsetzen ab: {root}")
                 else:
                     continue
         else:
@@ -30,18 +30,16 @@ def find_mkv_files(start_path, config):
             if file.lower().endswith(".mkv"):
                 file_path = os.path.abspath(os.path.join(root, file))
                 if file_path in config.get("blacklist", []):
-                    log(
-                        f"Überspringe {file_path} da die Datei auf der Blacklist steht."
-                    )
+                    log(f"🚫 Überspringe {file} da die Datei auf der Blacklist steht.")
                     continue
                 try:
                     size = os.path.getsize(file_path)
                     if size > min_size_bytes:
                         size_mb = size / (1024 * 1024)
-                        log(f"Gefunden: {file} ({format_number(size_mb)} MB)")
+                        log(f"🔍 Gefunden: {file} ({format_number(size_mb)} MB)")
                         yield file_path
                 except OSError as e:
-                    log(f"Fehler beim Zugriff auf {file_path}: {e}")
+                    log(f"❌ Fehler beim Zugriff auf {file_path}: {e}")
 
         config["last_path"] = root
         save_config(config)
@@ -91,7 +89,7 @@ def process_mkv(file_path, config):
         f"/config/{output_filename}",
     ]
 
-    log(f"Konvertierung von {filename} läuft...")
+    log(f"🔄 Konvertierung läuft...")
     start_time = time_module.time()  # Startzeit für die Konvertierung
     try:
         subprocess.run(
@@ -99,18 +97,18 @@ def process_mkv(file_path, config):
         )
         end_time = time_module.time()  # Endzeit nach der Konvertierung
         conversion_time = end_time - start_time
-        log(f"Konvertierung abgeschlossen: {output_path}")
+        log(f"✅ Konvertierung abgeschlossen!")
 
         # Überprüfen, ob das Ausgabefile existiert und größer als 0 Bytes ist
         if not os.path.exists(output_path):
-            log(f"Ausgabedatei wurde nicht erstellt: {output_path}")
+            log(f"❌ Ausgabedatei wurde nicht erstellt: {output_path}")
             return
 
         output_size = os.path.getsize(output_path)
         if output_size == 0:
-            log(f"Ausgabedatei ist leer: {output_path}")
+            log(f"😵‍💫 Ausgabedatei ist leer: {output_path}")
             os.remove(output_path)
-            log(f"Leere Ausgabedatei gelöscht: {output_path}")
+            log(f"✅ Leere Ausgabedatei gelöscht: {output_path}")
             return
 
         # Vergleiche Dateigrößen
@@ -125,24 +123,24 @@ def process_mkv(file_path, config):
 
             if output_size < input_size:
                 os.remove(file_path)
-                log(f"Original MKV-Datei gelöscht: {file_path}")
+                log(f"🎥 Original MKV-Datei gelöscht: {file_path}")
             else:
                 os.remove(output_path)
-                log(f"Konvertierte MP4-Datei gelöscht: {output_path}")
+                # log(f"🎥 Konvertierte MP4-Datei gelöscht: {output_path}")
 
                 # Füge die Datei zur Blacklist hinzu
                 if file_path not in config["blacklist"]:
                     config["blacklist"].append(file_path)
                     save_config(config)
                     log(
-                        f"Die Konvertierung bringt keine Ersparnis. Blacklisteintrag erstellt."
+                        f"🫣 Die Konvertierung bringt keine Ersparnis. Blacklisteintrag erstellt."
                     )
 
             # Nur positive Ersparnisse loggen und in die Statistik aufnehmen
             if savings_mb > 0 and savings_percent > 0:
                 # Logge die Ersparnis pro Datei
                 log(
-                    f"Ersparnis für {filename}: {format_number(savings_mb)} MB ({format_number(savings_percent)}%)"
+                    f"💫 Ersparnis für {filename}: {format_number(savings_mb)} MB ({format_number(savings_percent)}%)"
                 )
 
                 # Aktualisiere die Statistik
@@ -151,7 +149,9 @@ def process_mkv(file_path, config):
                 )
 
         except OSError as e:
-            log(f"Fehler beim Vergleichen oder Löschen der Dateien: {e}")
+            log(f"❌ Fehler beim Vergleichen oder Löschen der Dateien: {e}")
 
     except subprocess.CalledProcessError as e:
-        log(f"Fehler bei der Verarbeitung von {file_path}: {e.stderr.decode('utf-8')}")
+        log(
+            f"❌ Fehler bei der Verarbeitung von {file_path}: {e.stderr.decode('utf-8')}"
+        )
