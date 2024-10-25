@@ -20,7 +20,7 @@ def find_mkv_files(start_path, config):
             if not started:
                 if os.path.abspath(root) == os.path.abspath(config["last_path"]):
                     started = True
-                    log(f"⏯️  Fortsetzen ab: {root}")
+                    log(f"⏯️ Fortsetzen ab: {root}")
                 else:
                     continue
         else:
@@ -36,7 +36,7 @@ def find_mkv_files(start_path, config):
                     size = os.path.getsize(file_path)
                     if size > min_size_bytes:
                         size_mb = size / (1024 * 1024)
-                        log(f"🔍 Gefunden: {file} ({format_number(size_mb)} MB)")
+                        log(f"👀 Gefunden: {file} ({format_number(size_mb)} MB)")
                         yield file_path
                 except OSError as e:
                     log(f"❌ Fehler beim Zugriff auf {file_path}: {e}")
