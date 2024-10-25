@@ -33,7 +33,7 @@ def display_directory_savings(config, directory):
     savings_mb = stats["per_directory_savings_mb"].get(directory, 0.0)
     if savings_mb > 0:
         log(
-            f"📙 Ersparnis für Verzeichnis '{directory}': {format_number(savings_mb)} MB"
+            f"🤩 Ersparnis für Verzeichnis '{directory}': {format_number(savings_mb)} MB"
         )
 
 

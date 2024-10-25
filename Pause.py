@@ -36,7 +36,7 @@ def check_pause_time(settings, statistics):
                 wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 wait_minutes = int(round(wait_seconds / 60))
-                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}.")
+                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}")
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
                 log(f"🕰️ Warte {wait_minutes} Minuten bis zum Ende der Pause.")
@@ -56,7 +56,7 @@ def check_pause_time(settings, statistics):
                     wait_until = datetime.combine(datetime.today(), end_time)
                 wait_seconds = (wait_until - datetime.now()).total_seconds()
                 wait_minutes = int(round(wait_seconds / 60))
-                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}.")
+                log(f"🏝️ Pausenzeit aktiv: {start_str} - {end_str}")
                 # Logge die aktuellen Statistiken
                 log_current_statistics(statistics)
                 log(f"🕰️ Warte {wait_minutes} Minuten bis zum Ende der Pause.")
