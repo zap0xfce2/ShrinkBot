@@ -140,7 +140,7 @@ def process_mkv(file_path, config):
             if savings_mb > 0 and savings_percent > 0:
                 # Logge die Ersparnis pro Datei
                 log(
-                    f"💫 Ersparnis für {filename}: {format_number(savings_mb)} MB ({format_number(savings_percent)}%)"
+                    f"🥳 Ersparnis für {filename}: {format_number(savings_mb)} MB ({format_number(savings_percent)}%)"
                 )
 
                 # Aktualisiere die Statistik
