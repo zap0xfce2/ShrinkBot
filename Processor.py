@@ -123,10 +123,10 @@ def process_mkv(file_path, config):
 
             if output_size < input_size:
                 os.remove(file_path)
-                log(f"🎥 Original MKV-Datei gelöscht: {file_path}")
+                log(f"🗑️ Original MKV-Datei gelöscht: {file_path}")
             else:
                 os.remove(output_path)
-                # log(f"🎥 Konvertierte MP4-Datei gelöscht: {output_path}")
+                # log(f"🗑️ Konvertierte MP4-Datei gelöscht: {output_path}")
 
                 # Füge die Datei zur Blacklist hinzu
                 if file_path not in config["blacklist"]:
